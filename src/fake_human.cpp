@@ -103,7 +103,6 @@ int main(int argc, char** argv) {
       poses.header.frame_id="world";
       poses.header.stamp=ros::Time::now();
       poses_pub.publish(poses);
-      ROS_INFO_STREAM(human_points.size());
       pub_keypoints.publish(mp_points);
       ros::Duration(0.03).sleep();
       t = (ros::Time::now()-start_time).toSec();
