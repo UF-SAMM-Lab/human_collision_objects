@@ -7,6 +7,8 @@ int main(int argc, char** argv) {
     spinner.start();
 
     ros::Publisher pub_keypoints = nh.advertise<std_msgs::Float32MultiArray>( "/skeleton", 0,false);
+    ros::Publisher pub_skel_pts = nh.advertise<std_msgs::Float32MultiArray>( "/skeleton_points", 0,false);
+    ros::Publisher pub_skel_quats = nh.advertise<std_msgs::Float32MultiArray>( "/skeleton_quats", 0,false);
     ros::Publisher poses_pub = nh.advertise<geometry_msgs::PoseArray>( "/poses", 0,false);
 
     //do a test with no obsctacles:
@@ -104,6 +106,31 @@ int main(int argc, char** argv) {
       poses.header.stamp=ros::Time::now();
       poses_pub.publish(poses);
       pub_keypoints.publish(mp_points);
+      std::vector<Eigen::Vector3f> coco_joint_locations(18);
+      for (int i=0;i<18;i++) coco_joint_locations[i] = Eigen::Vector3f::Zero();
+      coco_joint_locations[0] = human_points[2];
+      coco_joint_locations[1] = human_points[1];
+      coco_joint_locations[2] = human_points[3];
+      coco_joint_locations[3] = human_points[4];
+      coco_joint_locations[4] = human_points[5];
+      coco_joint_locations[5] = human_points[6];
+      coco_joint_locations[6] = human_points[7];
+      coco_joint_locations[7] = human_points[8];
+      coco_joint_locations[8] = human_points[0];
+      coco_joint_locations[11] = human_points[0];
+      std_msgs::Float32MultiArray coco_msg;
+      for (int i=0;i<coco_joint_locations.size();i++) {
+        for (int j=0;j<3;j++) coco_msg.data.push_back(coco_joint_locations[i][j]);
+      }
+      pub_skel_pts.publish(coco_msg);
+      std_msgs::Float32MultiArray quat_msg;
+      for (int i=0;i<human_quats.size();i++) {
+        quat_msg.data.push_back(human_quats[i].w());
+        quat_msg.data.push_back(human_quats[i].x());
+        quat_msg.data.push_back(human_quats[i].y());
+        quat_msg.data.push_back(human_quats[i].z());
+      }
+      pub_skel_quats.publish(quat_msg);
       ros::Duration(0.03).sleep();
       t = (ros::Time::now()-start_time).toSec();
     }
