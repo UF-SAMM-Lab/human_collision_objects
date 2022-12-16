@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     //                           0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
     std::vector<int> hp_to_mp = {2,2,2,2,2,2,2,2,2,2, 2, 3, 6, 4, 7, 5, 8, 5, 8, 5, 8, 5, 8, 0, 0, 0, 0, 0, 0};
     co_human.start_obs();
-    while (t<co_human.end_time) {
+    while ((t<co_human.end_time)&&(ros::ok())) {
       co_human.getLinkData(t,human_points,human_quats);  
       geometry_msgs::PoseArray poses;
       geometry_msgs::Pose pose;
@@ -124,7 +124,10 @@ int main(int argc, char** argv) {
       }
       pub_skel_pts.publish(coco_msg);
       std_msgs::Float32MultiArray quat_msg;
+      quat_msg.data.push_back(0);
+      for (int i=0;i<3;i++) quat_msg.data.push_back(human_points[0][i]);
       for (int i=0;i<human_quats.size();i++) {
+        human_quats[i].normalize();
         quat_msg.data.push_back(human_quats[i].w());
         quat_msg.data.push_back(human_quats[i].x());
         quat_msg.data.push_back(human_quats[i].y());

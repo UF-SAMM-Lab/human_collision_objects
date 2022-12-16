@@ -140,7 +140,6 @@ void humanCollisionObjects::getLinkData(double t,std::vector<Eigen::Vector3f>& p
   std::cout<<"t:"<<t<<","<<dt<<","<<int(t/dt)<<std::endl;
   forward_kinematics(pose_sequence[std::min(int(t/dt),int(pose_sequence.size())-1)],record_transform_to_world);
   points = human_points;
-  std::cout<<"human points:"<<human_points.size()<<std::endl;
   quats = human_quats;
 
 }
@@ -228,6 +227,8 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
     Eigen::Quaternionf q;
     for (int i=0;i<7;i++){
         q = quat_to_world*Eigen::Quaternionf(pose_elements[i*4+4],pose_elements[i*4+5],pose_elements[i*4+6],pose_elements[i*4+7]);
+        
+        // std::cout<<"quat "<<i<<":<"<<pose_elements[i*4+4]<<","<<pose_elements[i*4+5]<<","<<pose_elements[i*4+6]<<","<<pose_elements[i*4+7]<<">"<<std::endl;
         quats.push_back(q);
         // ROS_INFO_STREAM("quat "<<q.w()<<" "<<q.vec().transpose());
     }
