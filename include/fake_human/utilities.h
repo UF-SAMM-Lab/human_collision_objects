@@ -54,7 +54,7 @@ class humanCollisionObjects {
         void forward_kinematics(std::vector<float> pose_elements, Eigen::Isometry3f transform_to_world);
         void moveCollisionObject(moveit_msgs::CollisionObject &msg, Eigen::Vector3f pos, Eigen::Quaternionf quat);
         moveit_msgs::CollisionObject createCollisionObject(Eigen::Vector3f pos, Eigen::Quaternionf quat, double length, double radius, std::string id);
-        std::vector<std::string> co_ids = {"torso","neck","l_upper", "l_fore","r_upper","r_fore"};
+        std::vector<std::string> co_ids = {"human_torso","human_neck","human_l_upper", "human_l_fore","human_r_upper","human_r_fore"};
         double shoulder_len = 0.35;
         std::vector<double> link_lengths_ = {0.5,0.2,0.35,0.45,0.35,0.45};
         std::vector<double> link_radii_ = {0.17,0.1,0.1,0.07,0.1,0.07};

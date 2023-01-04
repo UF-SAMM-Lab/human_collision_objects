@@ -1,5 +1,11 @@
 #include <fake_human/utilities.h>
 
+bool inflate = false;
+
+void human_inflate_callback(const std_msgs::Bool::ConstPtr& msg){
+  inflate =  msg->data;
+}
+
 int main(int argc, char** argv) {
     ros::init(argc,argv,"fake_human");
     ros::NodeHandle nh;
@@ -9,7 +15,9 @@ int main(int argc, char** argv) {
     ros::Publisher pub_keypoints = nh.advertise<std_msgs::Float32MultiArray>( "/skeleton", 0,false);
     ros::Publisher pub_skel_pts = nh.advertise<std_msgs::Float32MultiArray>( "/skeleton_points", 0,false);
     ros::Publisher pub_skel_quats = nh.advertise<std_msgs::Float32MultiArray>( "/skeleton_quats", 0,false);
-    ros::Publisher poses_pub = nh.advertise<geometry_msgs::PoseArray>( "/poses", 0,false);
+    ros::Publisher poses_pub = nh.advertise<geometry_msgs::PoseArray>( "/poses", 0,false);    
+    ros::Subscriber sub_inflate = nh.subscribe("human_inflate", 1, human_inflate_callback); //get status of moveit trajectory execution
+
 
     //do a test with no obsctacles:
     std::string plan_group = "manipulator";
@@ -24,7 +32,6 @@ int main(int argc, char** argv) {
     }
 
     moveit::planning_interface::MoveGroupInterface move_group(plan_group);
-    const robot_state::JointModelGroup* joint_model_group_ = move_group.getCurrentState()->getJointModelGroup(plan_group);
     robot_model_loader::RobotModelLoaderPtr robot_model_loader = robot_model_loader::RobotModelLoaderPtr(new robot_model_loader::RobotModelLoader("robot_description"));
     const robot_model::RobotModelPtr& model = robot_model_loader->getModel();
     std::shared_ptr<planning_scene::PlanningScene> scene(new planning_scene::PlanningScene(model));
@@ -48,8 +55,6 @@ int main(int argc, char** argv) {
 
     std::cout<<"human_task_num:"<<human_task_num<<std::endl;
 
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-    bool plan_success;
     Eigen::Isometry3f transform_to_world = Eigen::Isometry3f::Identity();
     std::vector<double> workcell_transform = {0,0,0,0,0,0,1};
     std::string wc_tf;
@@ -80,7 +85,7 @@ int main(int argc, char** argv) {
     }
     std::cout<<std::endl;
 
-    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.2,Eigen::Isometry3f::Identity());
+    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.06,Eigen::Isometry3f::Identity());
     co_human.read_human_task(human_task_num,transform_to_world);
     double t=0.0;
     ros::Time start_time = ros::Time::now();
@@ -90,8 +95,16 @@ int main(int argc, char** argv) {
     //                           0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
     std::vector<int> hp_to_mp = {2,2,2,2,2,2,2,2,2,2, 2, 3, 6, 4, 7, 5, 8, 5, 8, 5, 8, 5, 8, 0, 0, 0, 0, 0, 0};
     co_human.start_obs();
+    bool inflated = false;
     while ((t<co_human.end_time)&&(ros::ok())) {
       co_human.getLinkData(t,human_points,human_quats);  
+      if ((inflate)&&(!inflated)) {
+        co_human.inflate_live_obs();
+        inflated = true;
+      } else if ((!inflate)&&(inflated)) {
+        co_human.resume_live_obs();
+        inflated = false;
+      }
       geometry_msgs::PoseArray poses;
       geometry_msgs::Pose pose;
       mp_points.data.clear();
@@ -134,7 +147,7 @@ int main(int argc, char** argv) {
         quat_msg.data.push_back(human_quats[i].z());
       }
       pub_skel_quats.publish(quat_msg);
-      ros::Duration(0.03).sleep();
+      ros::Duration(0.01).sleep();
       t = (ros::Time::now()-start_time).toSec();
     }
     ROS_INFO_STREAM("made it!");
