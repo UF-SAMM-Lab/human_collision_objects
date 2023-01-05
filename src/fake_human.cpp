@@ -81,11 +81,11 @@ int main(int argc, char** argv) {
       std::cout<<human_link_lengths[i]<<",";
       if (i==2) continue;
       human_link_lengths2.push_back(human_link_lengths[i]);
-      human_link_radii2.push_back(human_link_radii[i]);
+      human_link_radii2.push_back(human_link_radii[i]+0.06);
     }
     std::cout<<std::endl;
 
-    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.06,Eigen::Isometry3f::Identity());
+    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.00,Eigen::Isometry3f::Identity());
     co_human.read_human_task(human_task_num,transform_to_world);
     double t=0.0;
     ros::Time start_time = ros::Time::now();
