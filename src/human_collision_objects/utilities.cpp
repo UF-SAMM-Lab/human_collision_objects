@@ -196,7 +196,8 @@ moveit_msgs::CollisionObject humanCollisionObjects::createCollisionObject(Eigen:
 
 
 void humanCollisionObjects::moveCollisionObject(moveit_msgs::CollisionObject &msg, Eigen::Vector3f pos, Eigen::Quaternionf quat)
-{
+{   
+    if (pos.hasNaN() || quat.coeffs().hasNaN()) return;
     geometry_msgs::Pose co_pose;
     msg.pose.position.x = pos[0];
     msg.pose.position.y = pos[1];
@@ -227,7 +228,18 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
     Eigen::Quaternionf q;
     for (int i=0;i<7;i++){
         q = quat_to_world*Eigen::Quaternionf(pose_elements[i*4+4],pose_elements[i*4+5],pose_elements[i*4+6],pose_elements[i*4+7]);
-        
+        double q_norm = q.squaredNorm();
+        if (q_norm<0.1) {
+          q.w() = 1;
+          q.x() = 0;
+          q.y() = 0;
+          q.z() = 0;
+        } else {
+          q.w() = q.w()/q_norm;
+          q.x() = q.x()/q_norm;
+          q.y() = q.y()/q_norm;
+          q.z() = q.z()/q_norm;
+        }
         // std::cout<<"quat "<<i<<":<"<<pose_elements[i*4+4]<<","<<pose_elements[i*4+5]<<","<<pose_elements[i*4+6]<<","<<pose_elements[i*4+7]<<">"<<std::endl;
         quats.push_back(q);
         // ROS_INFO_STREAM("quat "<<q.w()<<" "<<q.vec().transpose());
@@ -295,7 +307,7 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
 
 void humanCollisionObjects::read_human_task(int task_num, Eigen::Isometry3f transform) {
     record_transform_to_world = transform;
-    boost::filesystem::path pkg_path(ros::package::getPath("fake_human"));
+    boost::filesystem::path pkg_path(ros::package::getPath("human_collision_objects"));
     boost::filesystem::path data_path("data");
     boost::filesystem::path file("task_"+std::to_string(task_num) + "_t_means.csv");
     std::string file_name = boost::filesystem::path(pkg_path / data_path / file).string();

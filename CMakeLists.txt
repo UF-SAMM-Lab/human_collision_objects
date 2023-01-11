@@ -46,3 +46,11 @@ target_link_libraries(sim_human
 )
 add_dependencies(sim_human ${catkin_EXPORTED_TARGETS})
 install(TARGETS sim_human DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+add_executable(live_human src/live_human.cpp)
+target_link_libraries(live_human
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
+add_dependencies(live_human ${catkin_EXPORTED_TARGETS})
+install(TARGETS live_human DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
