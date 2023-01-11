@@ -9,7 +9,7 @@
     <param  name="plan_group" value="edo"/>
     <param  name="ctrl_ns" value="edo"/>
 
-    <node name="sim_human" pkg="fake_human" type="sim_human" respawn="false" output="screen" launch-prefix="$(arg launch_prefix)">
+    <node name="sim_human" pkg="human_collision_objects" type="sim_human" respawn="false" output="screen" launch-prefix="$(arg launch_prefix)">
         <param name="workcell_transform" value="$(arg transform)"/>
     </node> 
     <!-- launch-prefix="gdb -ex run  -args"> -->
