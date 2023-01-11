@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(fake_human)
+project(human_collision_objects)
 add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
 #set(CMAKE_BUILD_TYPE Release)
 #add_compile_options(-std=c++11)
@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES fake_human
+  LIBRARIES human_collision_objects
   CATKIN_DEPENDS moveit_core roscpp geometry_msgs visualization_msgs subscription_notifier moveit_ros_planning_interface rosparam_utilities
   DEPENDS
 )
