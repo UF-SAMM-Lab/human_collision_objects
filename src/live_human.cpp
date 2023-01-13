@@ -71,11 +71,12 @@ int main(int argc, char** argv) {
       std::cout<<human_link_lengths[i]<<",";
       if (i==2) continue;
       human_link_lengths2.push_back(human_link_lengths[i]);
-      human_link_radii2.push_back(human_link_radii[i]+0.06);
+      human_link_radii2.push_back(human_link_radii[i]+0.10);
     }
+    human_link_radii2[1]+= 0.1;
     std::cout<<std::endl;
 
-    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.00,Eigen::Isometry3f::Identity());
+    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.00,Eigen::Isometry3f::Identity(),0.1);
     co_human.start_live_obs();
     bool inflated = false;
     while (ros::ok()) { 

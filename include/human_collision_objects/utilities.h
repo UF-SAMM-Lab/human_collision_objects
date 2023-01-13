@@ -69,9 +69,10 @@ class humanCollisionObjects {
         double elapsed_time;
         void update_timer(const ros::TimerEvent& event);
         bool pause_live = false;
+        double extra_link_len = 0.0;
     public:
         void setJointLocations(std::vector<Eigen::Vector3f> joints);
-        humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist, Eigen::Isometry3f transform);
+        humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist, Eigen::Isometry3f transform, double extra_len);
         void removeHumans(void);
         void read_human_task(int task_num, Eigen::Isometry3f transform);
         void updateCollisionObjects(double t);

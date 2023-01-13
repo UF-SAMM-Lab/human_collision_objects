@@ -23,7 +23,7 @@ void clearObstacles(void) {
     }
 }
 
-humanCollisionObjects::humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist,Eigen::Isometry3f transform):planning_scene_(planning_scene_ptr),nh(node_handle),link_lengths_(lengths),link_radii_(radii), min_dist_(min_dist),live_transform_to_world(transform)  {
+humanCollisionObjects::humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist,Eigen::Isometry3f transform, double extra_len):planning_scene_(planning_scene_ptr),nh(node_handle),link_lengths_(lengths),link_radii_(radii), min_dist_(min_dist),live_transform_to_world(transform),extra_link_len(extra_len)  {
   
   planning_scene.is_diff = true;
   planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
@@ -39,6 +39,7 @@ humanCollisionObjects::humanCollisionObjects(ros::NodeHandle node_handle, const 
   ros::WallDuration(1.0).sleep();
   timer_start = ros::Time::now();
   act_lengths = link_lengths_;
+  for (int i = 0;i<act_lengths.size();i++) act_lengths[i]+=extra_link_len;
   act_radii = link_radii_;
 }
 
@@ -254,14 +255,14 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
     Eigen::Vector3f spine_top = pelvis_loc+link_lengths_[0]*z_spine.vec();
     human_points.push_back(pelvis_loc);
     human_points.push_back(spine_top);
-    link_centroids.push_back(pelvis_loc+0.5*link_lengths_[0]*z_spine.vec());
+    link_centroids.push_back(pelvis_loc+0.5*(link_lengths_[0]+extra_link_len)*z_spine.vec());
     // ROS_INFO_STREAM("spine top "<<spine_top.transpose());
     Eigen::Quaternionf z_neck = quats[1]*z_axis_quat*quats[1].inverse();
     Eigen::Quaternionf x_neck = quats[1]*x_axis_quat*quats[1].inverse();
     // link_quats.push_back(z_neck);
     Eigen::Vector3f head = spine_top+link_lengths_[1]*z_neck.vec();
     human_points.push_back(head);
-    link_centroids.push_back(spine_top+0.5*link_lengths_[1]*z_neck.vec());
+    link_centroids.push_back(spine_top+0.5*(link_lengths_[1]+extra_link_len)*z_neck.vec());
     // ROS_INFO_STREAM("head top "<<head.transpose());
     Eigen::Quaternionf z_shoulders = quats[2]*z_axis_quat*quats[2].inverse();
     Eigen::Vector3f l_shoulder = spine_top-0.5*shoulder_len*z_shoulders.vec();
@@ -272,13 +273,13 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
     // link_quats.push_back(x_e1);
     Eigen::Vector3f e1 = l_shoulder+link_lengths_[2]*z_e1.vec();
     human_points.push_back(e1);
-    link_centroids.push_back(l_shoulder+0.5*link_lengths_[2]*z_e1.vec());
+    link_centroids.push_back(l_shoulder+0.5*(link_lengths_[2]+extra_link_len)*z_e1.vec());
     Eigen::Quaternionf z_w1 = quats[4]*z_axis_quat*quats[4].inverse();
     Eigen::Quaternionf x_w1 = quats[4]*x_axis_quat*quats[4].inverse();
     // link_quats.push_back(x_w1);
     Eigen::Vector3f w1 = e1+(link_lengths_[3]+0.1)*z_w1.vec();
     human_points.push_back(w1);
-    link_centroids.push_back(e1+0.5*(link_lengths_[3])*z_w1.vec());
+    link_centroids.push_back(e1+0.5*(link_lengths_[3]+extra_link_len)*z_w1.vec());
     Eigen::Vector3f r_shoulder = spine_top+0.5*shoulder_len*z_shoulders.vec();
     human_points.push_back(r_shoulder);
     // ROS_INFO_STREAM("r_shoulder "<<r_shoulder.transpose());
@@ -287,13 +288,13 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
     // link_quats.push_back(x_e2);
     Eigen::Vector3f e2 = r_shoulder+link_lengths_[4]*z_e2.vec();
     human_points.push_back(e2);
-    link_centroids.push_back(r_shoulder+0.5*link_lengths_[4]*z_e2.vec());
+    link_centroids.push_back(r_shoulder+0.5*(link_lengths_[4]+extra_link_len)*z_e2.vec());
     Eigen::Quaternionf z_w2 = quats[6]*z_axis_quat*quats[6].inverse();
     Eigen::Quaternionf x_w2 = quats[6]*x_axis_quat*quats[6].inverse();
     // link_quats.push_back(x_w2);
     Eigen::Vector3f w2 = e2+(link_lengths_[5]+0.1)*z_w2.vec();
     human_points.push_back(w2);
-    link_centroids.push_back(e2+0.5*(link_lengths_[5])*z_w2.vec());
+    link_centroids.push_back(e2+0.5*(link_lengths_[5]+extra_link_len)*z_w2.vec());
 
     link_quats.push_back(quats[0]);
     link_quats.push_back(quats[1]);

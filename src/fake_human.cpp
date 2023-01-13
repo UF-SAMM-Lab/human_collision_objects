@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     }
     std::cout<<std::endl;
 
-    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.00,Eigen::Isometry3f::Identity());
+    humanCollisionObjects co_human(nh,scene,human_link_lengths2,human_link_radii2, 0.00,Eigen::Isometry3f::Identity(),0.0);
     co_human.read_human_task(human_task_num,transform_to_world);
     double t=0.0;
     ros::Time start_time = ros::Time::now();
