@@ -75,13 +75,15 @@ int main(int argc, char** argv) {
     std::vector<double> human_link_radii; 
     nh.getParam("/human_link_lengths", human_link_lengths);
     nh.getParam("/human_link_radii", human_link_radii);
+    double inc_radii = 0.0;
+    nh.getParam("/live_human/inc_radii_m", inc_radii);
     std::vector<double> human_link_lengths2; 
     std::vector<double> human_link_radii2; 
     for (int i=0;i<human_link_radii.size();i++) {
       std::cout<<human_link_lengths[i]<<",";
       if (i==2) continue;
       human_link_lengths2.push_back(human_link_lengths[i]);
-      human_link_radii2.push_back(human_link_radii[i]+0.0);
+      human_link_radii2.push_back(human_link_radii[i]+inc_radii);
     }
     std::cout<<std::endl;
 

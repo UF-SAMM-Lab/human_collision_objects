@@ -9,10 +9,12 @@
     <arg name="transform" default="0,0,0,1,0,0,0" />
     <param  name="plan_group" value="edo"/>
     <param  name="ctrl_ns" value="edo"/>
+    <arg name="inc_radii_m" default="0.0" />
 
     <node name="sim_human" pkg="human_collision_objects" type="sim_human" respawn="false" output="screen" launch-prefix="$(arg launch_prefix)">
         <param name="workcell_transform" value="$(arg transform)"/>
         <param name="add_objects" value="$(arg add_objects)"/>
+        <param name="inc_radii_m" value="$(arg inc_radii_m)"/>
     </node> 
     <!-- launch-prefix="gdb -ex run  -args"> -->
     <!-- "gdb -.-ex run -.-args"  -->

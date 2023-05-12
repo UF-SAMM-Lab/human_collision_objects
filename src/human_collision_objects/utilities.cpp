@@ -60,24 +60,63 @@ void humanCollisionObjects::stop_live_obs(void) {
 
 void humanCollisionObjects::liveCollisionObjectsCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
   // if (pause_live) return;
+  moveit::planning_interface::PlanningSceneInterface current_scene;
+  std::vector<std::string> obj_names = current_scene.getKnownObjectNames();
+  
   forward_kinematics(msg->data,live_transform_to_world);
-  std::lock_guard<std::mutex> l(co_mtx);
-  // ROS_INFO_STREAM("link_quats"<<link_quats.size());
-  if (planning_scene.world.collision_objects.empty()) {
-      collisionObjects.clear();
-      for (int i=0;i<link_quats.size();i++) {
-        collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
-      }
-      collisionObjects.push_back(createHeadCollisionObject(link_centroids.back(),act_radii[1]+0.06,"head"));
-      // psi.addCollisionObjects(collisionObjects);
-    } else {
-      for (int i=0;i<link_quats.size();i++) {
-          moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
-      }
-      moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
-      // psi.applyCollisionObjects(collisionObjects);
 
+  std::vector<std::string> existing_cos;
+  std::lock_guard<std::mutex> l(co_mtx);
+  std::cout<<"objects that should be in scene:";
+  for (int i=0;i<collisionObjects.size();i++) {
+    existing_cos.push_back(collisionObjects[i].id);
+    std::cout<<collisionObjects[i].id<<",";
+  }
+  std::cout<<std::endl;  
+  std::cout<<"objects that are in scene:";
+  for (int i=0;i<obj_names.size();i++) {
+    std::cout<<obj_names[i]<<",";
+  }
+  std::cout<<std::endl;
+  for (int i=0;i<link_quats.size();i++) {
+    auto existing_id = std::find(existing_cos.begin(),existing_cos.end(),co_ids[i]);
+    if ((std::find(obj_names.begin(),obj_names.end(),co_ids[i])==obj_names.end()) || (existing_id==existing_cos.end())) {
+      if (existing_id!=existing_cos.end()) {
+        int index = std::distance( existing_cos.begin(), existing_id );
+        existing_cos.erase(existing_cos.begin()+index);
+        collisionObjects.erase(collisionObjects.begin()+index);
+      }
+      collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
+    } else {
+      moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
     }
+  }
+
+  auto existing_id = std::find(existing_cos.begin(),existing_cos.end(),"head");
+  if ((std::find(obj_names.begin(),obj_names.end(),"head")==obj_names.end()) || (existing_id==existing_cos.end())) {
+    if (existing_id!=existing_cos.end()) {
+      int index = std::distance( existing_cos.begin(), existing_id );
+      existing_cos.erase(existing_cos.begin()+index);
+      collisionObjects.erase(collisionObjects.begin()+index);
+    }
+    collisionObjects.push_back(createHeadCollisionObject(link_centroids.back(),act_radii[1]+0.06,"head"));
+  } else {
+    moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
+  }
+  // ROS_INFO_STREAM("link_quats"<<link_quats.size());
+  // if (planning_scene.world.collision_objects.empty()) {
+  //     collisionObjects.clear();
+  //     for (int i=0;i<link_quats.size();i++) {
+  //       collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
+  //     }
+  //     // psi.addCollisionObjects(collisionObjects);
+  //   } else {
+  //     for (int i=0;i<link_quats.size();i++) {
+  //         moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
+  //     }
+  //     // psi.applyCollisionObjects(collisionObjects);
+
+  //   }
     planning_scene.world.collision_objects = collisionObjects;
 
     if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
@@ -120,28 +159,51 @@ void humanCollisionObjects::pause_obs(void) {
 }
 
 void humanCollisionObjects::updateCollisionObjects(double t) {
+
+  moveit::planning_interface::PlanningSceneInterface current_scene;
+  std::vector<std::string> obj_names = current_scene.getKnownObjectNames();
   // std::cout<<"t:"<<t<<","<<dt<<","<<int(t/dt)<<std::endl;
   forward_kinematics(pose_sequence[std::min(int(t/dt),int(pose_sequence.size())-1)],record_transform_to_world);
   std::lock_guard<std::mutex> l(co_mtx);
   // ROS_INFO_STREAM("link_quats"<<link_quats.size());
-  if (planning_scene.world.collision_objects.empty()) {
-      collisionObjects.clear();
-      for (int i=0;i<link_quats.size();i++) {
-        collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
+  std::vector<std::string> existing_cos;
+  std::cout<<"objects that should be in scene:";
+  for (int i=0;i<collisionObjects.size();i++) {
+    existing_cos.push_back(collisionObjects[i].id);
+    std::cout<<collisionObjects[i].id<<",";
+  }
+  std::cout<<std::endl;  
+  std::cout<<"objects that are in scene:";
+  for (int i=0;i<obj_names.size();i++) {
+    std::cout<<obj_names[i]<<",";
+  }
+  std::cout<<std::endl;
+  for (int i=0;i<link_quats.size();i++) {
+    auto existing_id = std::find(existing_cos.begin(),existing_cos.end(),co_ids[i]);
+    if ((std::find(obj_names.begin(),obj_names.end(),co_ids[i])==obj_names.end()) || (existing_id==existing_cos.end())) {
+      if (existing_id!=existing_cos.end()) {
+        int index = std::distance( existing_cos.begin(), existing_id );
+        existing_cos.erase(existing_cos.begin()+index);
+        collisionObjects.erase(collisionObjects.begin()+index);
       }
-      collisionObjects.push_back(createHeadCollisionObject(link_centroids.back(),act_radii[1]+0.06,"head"));
-      // psi.addCollisionObjects(collisionObjects);
+      collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
     } else {
-      for (int i=0;i<link_quats.size();i++) {
-          moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
-      }
-      moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
-      // psi.applyCollisionObjects(collisionObjects);
-
+      moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
     }
-    planning_scene.world.collision_objects = collisionObjects;
-
-    if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
+  }
+  auto existing_id = std::find(existing_cos.begin(),existing_cos.end(),"head");
+  if ((std::find(obj_names.begin(),obj_names.end(),"head")==obj_names.end()) || (existing_id==existing_cos.end())) {
+    if (existing_id!=existing_cos.end()) {
+      int index = std::distance( existing_cos.begin(), existing_id );
+      existing_cos.erase(existing_cos.begin()+index);
+      collisionObjects.erase(collisionObjects.begin()+index);
+    }
+    collisionObjects.push_back(createHeadCollisionObject(link_centroids.back(),act_radii[1]+0.06,"head"));
+  } else {
+    moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
+  }
+  planning_scene.world.collision_objects = collisionObjects;
+  if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
 }
 
 void humanCollisionObjects::getLinkData(double t,std::vector<Eigen::Vector3f>& points,std::vector<Eigen::Quaternionf>& quats) {
@@ -153,8 +215,9 @@ void humanCollisionObjects::getLinkData(double t,std::vector<Eigen::Vector3f>& p
 }
 
 void humanCollisionObjects::removeHumans(void) {
-  std::cout<<"removing human"<<std::endl;
+
   std::lock_guard<std::mutex> l(co_mtx);
+  std::cout<<"removing human"<<std::endl;
   for (int i=0;i<collisionObjects.size();i++) {
       collisionObjects[i].operation = collisionObjects[i].REMOVE;
       planning_scene.world.collision_objects[i] = collisionObjects[i];
