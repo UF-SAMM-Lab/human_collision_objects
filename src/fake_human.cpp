@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
       std::cout<<human_link_lengths[i]<<",";
       if (i==2) continue;
       human_link_lengths2.push_back(human_link_lengths[i]);
-      human_link_radii2.push_back(human_link_radii[i]+0.06);
+      human_link_radii2.push_back(human_link_radii[i]+0.0);
     }
     std::cout<<std::endl;
 

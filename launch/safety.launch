@@ -1,0 +1,4 @@
+<launch>   
+    <rosparam file="$(find uf_edo_safety)/config/safety.yaml" command="load"/>
+    <include file="$(find uf_edo_safety)/launch/safety.launch"/>
+</launch>

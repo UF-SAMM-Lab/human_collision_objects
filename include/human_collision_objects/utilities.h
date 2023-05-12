@@ -70,6 +70,9 @@ class humanCollisionObjects {
         void update_timer(const ros::TimerEvent& event);
         bool pause_live = false;
         double extra_link_len = 0.0;
+        std::mutex co_mtx;
+        moveit_msgs::CollisionObject createHeadCollisionObject(Eigen::Vector3f pos, double radius, std::string id);
+        bool add_objects = true;
     public:
         void setJointLocations(std::vector<Eigen::Vector3f> joints);
         humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist, Eigen::Isometry3f transform, double extra_len);

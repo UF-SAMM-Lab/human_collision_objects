@@ -26,7 +26,7 @@ void clearObstacles(void) {
 humanCollisionObjects::humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist,Eigen::Isometry3f transform, double extra_len):planning_scene_(planning_scene_ptr),nh(node_handle),link_lengths_(lengths),link_radii_(radii), min_dist_(min_dist),live_transform_to_world(transform),extra_link_len(extra_len)  {
   
   planning_scene.is_diff = true;
-  planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
+  if (add_objects) planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
   ros::ServiceClient planning_scene_diff_client = nh.serviceClient<moveit_msgs::ApplyPlanningScene>("apply_planning_scene");
   planning_scene_diff_client.waitForExistence();
@@ -41,6 +41,7 @@ humanCollisionObjects::humanCollisionObjects(ros::NodeHandle node_handle, const 
   act_lengths = link_lengths_;
   for (int i = 0;i<act_lengths.size();i++) act_lengths[i]+=extra_link_len;
   act_radii = link_radii_;
+  nh.getParam("/sim_human/add_objects",add_objects);
 }
 
 void humanCollisionObjects::update_timer(const ros::TimerEvent& event) {
@@ -60,23 +61,26 @@ void humanCollisionObjects::stop_live_obs(void) {
 void humanCollisionObjects::liveCollisionObjectsCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
   // if (pause_live) return;
   forward_kinematics(msg->data,live_transform_to_world);
+  std::lock_guard<std::mutex> l(co_mtx);
   // ROS_INFO_STREAM("link_quats"<<link_quats.size());
   if (planning_scene.world.collision_objects.empty()) {
       collisionObjects.clear();
       for (int i=0;i<link_quats.size();i++) {
         collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
       }
+      collisionObjects.push_back(createHeadCollisionObject(link_centroids.back(),act_radii[1]+0.06,"head"));
       // psi.addCollisionObjects(collisionObjects);
     } else {
       for (int i=0;i<link_quats.size();i++) {
           moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
       }
+      moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
       // psi.applyCollisionObjects(collisionObjects);
 
     }
     planning_scene.world.collision_objects = collisionObjects;
 
-    planning_scene_diff_publisher.publish(planning_scene);
+    if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
 }
 void humanCollisionObjects::resume_live_obs(void) {
   inflate = false;
@@ -118,23 +122,26 @@ void humanCollisionObjects::pause_obs(void) {
 void humanCollisionObjects::updateCollisionObjects(double t) {
   // std::cout<<"t:"<<t<<","<<dt<<","<<int(t/dt)<<std::endl;
   forward_kinematics(pose_sequence[std::min(int(t/dt),int(pose_sequence.size())-1)],record_transform_to_world);
+  std::lock_guard<std::mutex> l(co_mtx);
   // ROS_INFO_STREAM("link_quats"<<link_quats.size());
   if (planning_scene.world.collision_objects.empty()) {
       collisionObjects.clear();
       for (int i=0;i<link_quats.size();i++) {
         collisionObjects.push_back(createCollisionObject(link_centroids[i],link_quats[i],act_lengths[i],act_radii[i],co_ids[i]));
       }
+      collisionObjects.push_back(createHeadCollisionObject(link_centroids.back(),act_radii[1]+0.06,"head"));
       // psi.addCollisionObjects(collisionObjects);
     } else {
       for (int i=0;i<link_quats.size();i++) {
           moveCollisionObject(collisionObjects[i],link_centroids[i],link_quats[i]);
       }
+      moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
       // psi.applyCollisionObjects(collisionObjects);
 
     }
     planning_scene.world.collision_objects = collisionObjects;
 
-    planning_scene_diff_publisher.publish(planning_scene);
+    if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
 }
 
 void humanCollisionObjects::getLinkData(double t,std::vector<Eigen::Vector3f>& points,std::vector<Eigen::Quaternionf>& quats) {
@@ -147,13 +154,14 @@ void humanCollisionObjects::getLinkData(double t,std::vector<Eigen::Vector3f>& p
 
 void humanCollisionObjects::removeHumans(void) {
   std::cout<<"removing human"<<std::endl;
+  std::lock_guard<std::mutex> l(co_mtx);
   for (int i=0;i<collisionObjects.size();i++) {
       collisionObjects[i].operation = collisionObjects[i].REMOVE;
       planning_scene.world.collision_objects[i] = collisionObjects[i];
   }
       // psi.applyCollisionObjects(collisionObjects);
   //publish the updated planning scene
-  planning_scene_diff_publisher.publish(planning_scene);
+  if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
   while (!planning_scene.world.collision_objects.empty()) {
       collisionObjects.pop_back();
       planning_scene.world.collision_objects.pop_back();
@@ -195,6 +203,40 @@ moveit_msgs::CollisionObject humanCollisionObjects::createCollisionObject(Eigen:
     return collisionObj;
 }
 
+
+moveit_msgs::CollisionObject humanCollisionObjects::createHeadCollisionObject(Eigen::Vector3f pos, double radius, std::string id)
+{
+    moveit_msgs::CollisionObject collisionObj;
+    collisionObj.header.frame_id = "world";
+    collisionObj.id = id;
+    shape_msgs::SolidPrimitive co_shape;
+    co_shape.type = co_shape.SPHERE;
+    co_shape.dimensions.resize(1);
+    co_shape.dimensions[0] = radius;
+
+    geometry_msgs::Pose co_pose;
+    co_pose.position.x = pos[0];
+    co_pose.position.y = pos[1];
+    co_pose.position.z = pos[2];
+    co_pose.orientation.x = 0;
+    co_pose.orientation.y = 0;
+    co_pose.orientation.z = 0;
+    co_pose.orientation.w = 1;  
+    collisionObj.pose=co_pose;
+    collisionObj.primitives.push_back(co_shape);
+    co_pose.position.x = 0;
+    co_pose.position.y = 0;
+    co_pose.position.z = 0;
+    co_pose.orientation.x = 0;
+    co_pose.orientation.y = 0;
+    co_pose.orientation.z = 0;
+    co_pose.orientation.w = 1;
+    collisionObj.primitive_poses.push_back(co_pose);
+    collisionObj.operation = collisionObj.ADD;
+    // collisionObj.pose.orientation.w = 1.0;
+
+    return collisionObj;
+}
 
 void humanCollisionObjects::moveCollisionObject(moveit_msgs::CollisionObject &msg, Eigen::Vector3f pos, Eigen::Quaternionf quat)
 {   
@@ -295,6 +337,7 @@ void humanCollisionObjects::forward_kinematics(std::vector<float> pose_elements,
     Eigen::Vector3f w2 = e2+(link_lengths_[5]+0.1)*z_w2.vec();
     human_points.push_back(w2);
     link_centroids.push_back(e2+0.5*(link_lengths_[5]+extra_link_len)*z_w2.vec());
+    link_centroids.push_back(spine_top+0.68*(link_lengths_[1]+extra_link_len)*z_neck.vec());
 
     link_quats.push_back(quats[0]);
     link_quats.push_back(quats[1]);
