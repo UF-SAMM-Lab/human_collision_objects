@@ -1,0 +1,18 @@
+<launch>
+    <arg name="bag_file"/> 
+    <!-- use_camera_mode options are left, right, both -->
+    <param name="bag_file" value="$(arg bag_file)" />
+
+    <node pkg="tf" type="static_transform_publisher" name="world_to_camera"  args="0.626327   1.0771  2.65563  0.246795  0.199702 -0.726767 0.609114  world camera_link 100" />
+    <node pkg="tf" type="static_transform_publisher" name="world_to_camera2" args="0.554074 -1.05671  2.68398 -0.28837 0.305113 0.608344 0.673547  world camera2_link 100" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_camera_depth" args="0.011, 0.018, 0.013 -0.500, 0.500, -0.500, 0.500 camera_link camera_depth_optical_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera2_to_camera2_depth" args="0.011, 0.018, 0.013 -0.500, 0.500, -0.500, 0.500 camera2_link camera2_depth_optical_frame" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_camera_color" args="0.011, 0.033, 0.013 -0.500, 0.500, -0.500, 0.500 camera_link camera_color_optical_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera2_to_camera2_color" args="0.011, 0.033, 0.013 -0.500, 0.500, -0.500, 0.500 camera2_link camera2_color_optical_frame" />
+
+    <node name="play_bag" pkg="human_collision_objects" type="play_bag.py" respawn="false" output="screen" required="true">
+    </node>
+
+</launch>

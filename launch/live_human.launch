@@ -1,11 +1,12 @@
 <launch>
     <arg name="debug" default="false" />
+    <arg name="cell" default="edo" />
     <arg unless="$(arg debug)" name="launch_prefix" value="" />
     <arg     if="$(arg debug)" name="launch_prefix"
            value="gdb --ex run --args" /> 
     <arg name="transform" default="0,0,0,1,0,0,0" />
-    <param  name="plan_group" value="edo"/>
-    <param  name="ctrl_ns" value="edo"/>
+    <param  name="plan_group" value="$(arg cell)"/>
+    <param  name="ctrl_ns" value="$(arg cell)"/>
     <arg name="inc_radii_m" default="0.0" />
 
     <node name="live_human" pkg="human_collision_objects" type="live_human" respawn="false" output="screen" launch-prefix="$(arg launch_prefix)">

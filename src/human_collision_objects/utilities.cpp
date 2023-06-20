@@ -25,23 +25,26 @@ void clearObstacles(void) {
 
 humanCollisionObjects::humanCollisionObjects(ros::NodeHandle node_handle, const planning_scene::PlanningScenePtr &planning_scene_ptr, std::vector<double> lengths, std::vector<double> radii, double min_dist,Eigen::Isometry3f transform, double extra_len):planning_scene_(planning_scene_ptr),nh(node_handle),link_lengths_(lengths),link_radii_(radii), min_dist_(min_dist),live_transform_to_world(transform),extra_link_len(extra_len)  {
   
+  nh.getParam("/human_collision_objects/add_objects",add_objects);
+  ROS_INFO_STREAM("adding objects:"<<add_objects);
   planning_scene.is_diff = true;
-  if (add_objects) planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
+  if (add_objects) {
+    planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
-  ros::ServiceClient planning_scene_diff_client = nh.serviceClient<moveit_msgs::ApplyPlanningScene>("apply_planning_scene");
-  planning_scene_diff_client.waitForExistence();
+    ros::ServiceClient planning_scene_diff_client = nh.serviceClient<moveit_msgs::ApplyPlanningScene>("apply_planning_scene");
+    planning_scene_diff_client.waitForExistence();
 
 
-  moveit_msgs::ApplyPlanningScene srv;
-  srv.request.scene = planning_scene;
-  planning_scene_diff_client.call(srv);
+    moveit_msgs::ApplyPlanningScene srv;
+    srv.request.scene = planning_scene;
+    planning_scene_diff_client.call(srv);
+  }
         
   ros::WallDuration(1.0).sleep();
   timer_start = ros::Time::now();
   act_lengths = link_lengths_;
   for (int i = 0;i<act_lengths.size();i++) act_lengths[i]+=extra_link_len;
   act_radii = link_radii_;
-  nh.getParam("/sim_human/add_objects",add_objects);
 }
 
 void humanCollisionObjects::update_timer(const ros::TimerEvent& event) {
@@ -203,6 +206,7 @@ void humanCollisionObjects::updateCollisionObjects(double t) {
     moveCollisionObject(collisionObjects.back(),link_centroids.back(),link_quats[1]);
   }
   planning_scene.world.collision_objects = collisionObjects;
+  ROS_INFO_STREAM("add objects:"<<add_objects);
   if (add_objects) planning_scene_diff_publisher.publish(planning_scene);
 }
 

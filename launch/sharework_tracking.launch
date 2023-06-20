@@ -1,0 +1,27 @@
+<launch>
+    <rosparam file="$(find human_collision_objects)/config/human_config.yaml" />
+    <arg name="use_camera_mode" default="both" /> 
+    <!-- use_camera_mode options are left, right, both -->
+    <param name="use_camera_mode" value="$(arg use_camera_mode)" />
+
+    <!-- <node pkg="tf" type="static_transform_publisher" name="world_to_camera"  args="0.626327   1.0771  2.65563  0.246795  0.199702 -0.726767 0.609114  world camera_link 100" />
+    <node pkg="tf" type="static_transform_publisher" name="world_to_camera2" args="0.554074 -1.05671  2.68398 -0.28837 0.305113 0.608344 0.673547  world camera2_link 100" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_camera_depth" args="0.011, 0.018, 0.013 -0.500, 0.500, -0.500, 0.500 camera_link camera_depth_optical_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera2_to_camera2_depth" args="0.011, 0.018, 0.013 -0.500, 0.500, -0.500, 0.500 camera2_link camera2_depth_optical_frame" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_camera_color" args="0.011, 0.033, 0.013 -0.500, 0.500, -0.500, 0.500 camera_link camera_color_optical_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera2_to_camera2_color" args="0.011, 0.033, 0.013 -0.500, 0.500, -0.500, 0.500 camera2_link camera2_color_optical_frame" /> -->
+
+    <node name="sharework_tracking" pkg="human_collision_objects" type="sharework_tracking.py" respawn="false" output="screen" required="true">
+        <param name="world_to_c1"  value="0.626327, 1.0771, 2.65563, 0.246795, 0.199702, -0.726767, 0.609114" />
+        <param name="world_to_c2" value="0.554074, -1.05671, 2.68398, -0.28837, 0.305113, 0.608344, 0.673547" />
+
+        <param name="c1_c1_depth" value="0.011, 0.018, 0.013, -0.500, 0.500, -0.500, 0.500" />
+        <param name="c2_c2_depth" value="0.011, 0.018, 0.013, -0.500, 0.500, -0.500, 0.500" />
+
+        <param name="c1_c1_color" value="0.011, 0.033, 0.013, -0.500, 0.500, -0.500, 0.500" />
+        <param name="c2_c2_color" value="0.011, 0.033, 0.013, -0.500, 0.500, -0.500, 0.500" />
+    </node>
+
+</launch>

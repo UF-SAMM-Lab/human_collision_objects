@@ -2,18 +2,19 @@
     <arg name="human_task_num" default="1" />
     <arg name="debug" default="false" />
     <arg name="add_objects" default="true" />
+    <arg name="cell" default="edo" />
     <param  name="human_task_num" value="$(arg human_task_num)"/>
     <arg unless="$(arg debug)" name="launch_prefix" value="" />
     <arg     if="$(arg debug)" name="launch_prefix"
            value="gdb --ex run --args" /> 
     <arg name="transform" default="0,0,0,1,0,0,0" />
-    <param  name="plan_group" value="edo"/>
-    <param  name="ctrl_ns" value="edo"/>
+    <param  name="plan_group" value="$(arg cell)"/>
+    <param  name="ctrl_ns" value="$(arg cell)"/>
     <arg name="inc_radii_m" default="0.0" />
+    <param name="human_collision_objects/add_objects" value="$(arg add_objects)"/>
 
     <node name="sim_human" pkg="human_collision_objects" type="sim_human" respawn="false" output="screen" launch-prefix="$(arg launch_prefix)">
         <param name="workcell_transform" value="$(arg transform)"/>
-        <param name="add_objects" value="$(arg add_objects)"/>
         <param name="inc_radii_m" value="$(arg inc_radii_m)"/>
     </node> 
     <!-- launch-prefix="gdb -ex run  -args"> -->

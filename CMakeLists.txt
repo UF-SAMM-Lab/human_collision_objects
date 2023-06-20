@@ -6,6 +6,7 @@ add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Debug)
 
 find_package(catkin REQUIRED COMPONENTS
+  rospy
   moveit_core
   roscpp
   geometry_msgs
@@ -17,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Boost REQUIRED COMPONENTS system filesystem)
+
+catkin_python_setup()
 
 catkin_package(
   INCLUDE_DIRS include
@@ -59,3 +62,10 @@ target_link_libraries(live_human
 )
 add_dependencies(live_human ${catkin_EXPORTED_TARGETS})
 install(TARGETS live_human DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
+catkin_install_python(PROGRAMS
+   src/sharework_tracking.py
+   src/play_bag.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
